@@ -2,4 +2,6 @@ streamlit
 requests
 beautifulsoup4
 pandas
-
+openpyxl 
+trafilatura lxml 
+newspaper3k 

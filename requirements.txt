@@ -3,5 +3,5 @@ requests
 beautifulsoup4
 pandas
 openpyxl 
-trafilatura lxml 
+trafilatura 
 newspaper3k 

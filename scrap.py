@@ -34,7 +34,7 @@ except:
     TRAFILATURA_AVAILABLE = False
 
 try:
-    from crawl4ai import WebCrawler
+    from crawl4ai import AsyncWebCrawler
     CRAWL4AI_AVAILABLE = True
 except:
     CRAWL4AI_AVAILABLE = False
@@ -76,13 +76,18 @@ class NewsArticleScraper:
                 self.ai_type = 'anthropic'
     
     def extract_with_crawl4ai(self, url):
-        """Extract article content using Crawl4AI (Synchronous)"""
+        """Extract article content using Crawl4AI"""
         try:
-            from crawl4ai import WebCrawler
+            import asyncio
+            from crawl4ai import AsyncWebCrawler
             
-            crawler = WebCrawler()
-            result = crawler.crawl(url=url, bypass_cache=True)
+            async def crawl_url(target_url):
+                async with AsyncWebCrawler() as crawler:
+                    result = await crawler.arun(url=target_url)
+                    return result
             
+            result = asyncio.run(crawl_url(url))
+
             if result and result.markdown:
                 text = result.markdown[:20000]
                 if len(text) > 200:
@@ -626,3 +631,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

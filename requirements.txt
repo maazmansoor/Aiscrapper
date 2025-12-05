@@ -7,3 +7,4 @@ trafilatura
 newspaper3k 
 crawl4ai
 playwright 
+WebCrawler

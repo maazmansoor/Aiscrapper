@@ -1,6 +1,7 @@
 import streamlit as st
 import asyncio
 import sys
+import os
 
 import requests
 from bs4 import BeautifulSoup
@@ -42,6 +43,7 @@ try:
 except:
     CRAWL4AI_AVAILABLE = False
 
+
 class NewsArticleScraper:
     def __init__(self, ai_config=None, use_crawl4ai=False):
         self.articles = []
@@ -81,19 +83,29 @@ class NewsArticleScraper:
     def extract_with_crawl4ai(self, url):
         """Extract article content using Crawl4AI"""
         try:
-            import asyncio
-            # Set the asyncio policy for Windows to be compatible with Playwright
+            # FIX: Set proper event loop policy for Windows
             if sys.platform == 'win32':
-                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+                # Use ProactorEventLoop on Windows for better subprocess support
+                asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
             
             from crawl4ai import AsyncWebCrawler
             
             async def crawl_url(target_url):
-                async with AsyncWebCrawler() as crawler:
-                    result = await crawler.arun(url=target_url)
-                    return result
+                try:
+                    async with AsyncWebCrawler() as crawler:
+                        result = await crawler.arun(url=target_url)
+                        return result
+                except Exception as e:
+                    st.error(f"Crawl4AI error during crawling: {str(e)[:100]}")
+                    return None
             
-            result = asyncio.run(crawl_url(url))
+            # Use the proper event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(crawl_url(url))
+            finally:
+                loop.close()
             
             if result and result.markdown:
                 text = result.markdown[:20000]
@@ -112,8 +124,7 @@ class NewsArticleScraper:
                     return text[:20000]
         except Exception as e:
             import traceback
-            st.error(f"Crawl4AI encountered an error: {e}")
-            st.code(traceback.format_exc())
+            st.error(f"Crawl4AI error: {str(e)[:100]}")
         
         return None
     

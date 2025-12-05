@@ -1,4 +1,7 @@
 import streamlit as st
+import asyncio
+import sys
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -79,6 +82,10 @@ class NewsArticleScraper:
         """Extract article content using Crawl4AI"""
         try:
             import asyncio
+            # Set the asyncio policy for Windows to be compatible with Playwright
+            if sys.platform == 'win32':
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            
             from crawl4ai import AsyncWebCrawler
             
             async def crawl_url(target_url):
@@ -104,7 +111,9 @@ class NewsArticleScraper:
                 if len(text) > 200:
                     return text[:20000]
         except Exception as e:
-            st.warning(f"Crawl4AI error: {str(e)[:80]}")
+            import traceback
+            st.error(f"Crawl4AI encountered an error: {e}")
+            st.code(traceback.format_exc())
         
         return None
     

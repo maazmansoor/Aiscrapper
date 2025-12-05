@@ -1578,7 +1578,7 @@ except:
     TRAFILATURA_AVAILABLE = False
 
 try:
-    from crawl4ai import AsyncWebCrawler, CrawlResult
+    from crawl4ai import WebCrawler
     CRAWL4AI_AVAILABLE = True
 except:
     CRAWL4AI_AVAILABLE = False
@@ -1619,32 +1619,29 @@ class NewsArticleScraper:
                 self.anthropic_key = ai_config['key']
                 self.ai_type = 'anthropic'
     
-    async def extract_with_crawl4ai(self, url):
-        """Extract article content using Crawl4AI"""
+    def extract_with_crawl4ai(self, url):
+        """Extract article content using Crawl4AI (Synchronous)"""
         try:
-            async with AsyncWebCrawler() as crawler:
-                result = await crawler.arun(
-                    url=url,
-                    bypass_cache=True,
-                    wait_for='body',
-                    timeout=15000
-                )
+            from crawl4ai import WebCrawler
+            
+            crawler = WebCrawler()
+            result = crawler.crawl(url=url, bypass_cache=True)
+            
+            if result and result.markdown:
+                text = result.markdown[:20000]
+                if len(text) > 200:
+                    return text
+            
+            if result and result.html:
+                soup = BeautifulSoup(result.html, 'html.parser')
+                for element in soup(['script', 'style', 'nav', 'header', 'footer', 'aside']):
+                    element.decompose()
                 
-                if result and result.markdown:
-                    text = result.markdown[:20000]
-                    if len(text) > 200:
-                        return text
+                text = soup.get_text(separator=' ', strip=True)
+                text = re.sub(r'\s+', ' ', text).strip()
                 
-                if result and result.html:
-                    soup = BeautifulSoup(result.html, 'html.parser')
-                    for element in soup(['script', 'style', 'nav', 'header', 'footer', 'aside']):
-                        element.decompose()
-                    
-                    text = soup.get_text(separator=' ', strip=True)
-                    text = re.sub(r'\s+', ' ', text).strip()
-                    
-                    if len(text) > 200:
-                        return text[:20000]
+                if len(text) > 200:
+                    return text[:20000]
         except Exception as e:
             st.warning(f"Crawl4AI error: {str(e)[:80]}")
         
@@ -1965,13 +1962,9 @@ Bullet Points:"""
                     
                     if self.use_crawl4ai and (not full_content or len(full_content) < 200):
                         st.write("🕷️ Using Crawl4AI for enhanced extraction...")
-                        try:
-                            import asyncio
-                            crawl_content = asyncio.run(self.extract_with_crawl4ai(actual_url))
-                            if crawl_content and len(crawl_content) > 200:
-                                full_content = crawl_content
-                        except Exception as e:
-                            st.warning(f"Crawl4AI extraction issue: {str(e)[:80]}")
+                        crawl_content = self.extract_with_crawl4ai(actual_url)
+                        if crawl_content and len(crawl_content) > 200:
+                            full_content = crawl_content
                     
                     if not full_content or len(full_content) < 150:
                         rss_desc = self.clean_rss_description(description_tag)

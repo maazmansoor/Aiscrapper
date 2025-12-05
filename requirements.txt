@@ -6,4 +6,4 @@ openpyxl
 trafilatura 
 newspaper3k 
 crawl4ai
-playwright playwright-stealth
+playwright 

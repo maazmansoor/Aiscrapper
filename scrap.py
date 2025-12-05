@@ -1,4 +1,21 @@
 import streamlit as st
+import subprocess
+
+# Install Playwright browsers on Streamlit Cloud
+try:
+    # Check if we are in the Streamlit Cloud environment
+    import os
+    if os.getenv("STREAMLIT_ENVIRONMENT") == "streamlit_cloud":
+        st.write("Setting up Playwright...")
+        st.write("This may take a minute...")
+        with st.spinner("Installing browser dependencies..."):
+            subprocess.run(["playwright", "install"], check=True)
+            subprocess.run(["playwright", "install-deps"], check=True)
+        st.success("Setup complete!")
+except Exception as e:
+    st.error(f"Error during Playwright setup: {e}")
+
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -631,4 +648,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

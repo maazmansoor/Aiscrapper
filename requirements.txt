@@ -1,10 +1,6 @@
 streamlit
 requests
-beautifulsoup4
 pandas
-openpyxl 
-trafilatura 
-newspaper3k 
-crawl4ai
-playwright
-WebCrawler
+openpyxl
+tavily-python
+google-generativeai
